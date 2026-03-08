@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pgvector
+asyncpg
+python-multipart
+pyjwt
+passlib[bcrypt]
+bcrypt==4.1.3

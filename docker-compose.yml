@@ -1,0 +1,74 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: codecheck-frontend
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  db:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_USER: codecheck_user
+      POSTGRES_PASSWORD: codecheck_password
+      POSTGRES_DB: codecheck_db
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d
+      - pgdata:/home/postgres/pgdata/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U codecheck_user -d codecheck_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mq-db:
+    image: quay.io/tembo/pg16-pgmq:latest
+    environment:
+      POSTGRES_USER: mq_user
+      POSTGRES_PASSWORD: mq_password
+      POSTGRES_DB: mq_db
+    volumes:
+      - ./mq-db/init:/docker-entrypoint-initdb.d
+      - mqdata:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mq_user -d mq_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: 
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql://codecheck_user:codecheck_password@db:5432/codecheck_db
+      MQ_DATABASE_URL: postgresql://mq_user:mq_password@mq-db:5432/mq_db
+      JWT_SECRET_KEY: codecheck-super-secret-key-2026
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+      mq-db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  mqdata:
