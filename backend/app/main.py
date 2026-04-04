@@ -1,35 +1,62 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-import os
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
-app = FastAPI(title="CodeCheck API")
+from .database import get_db
+from .auth import router as auth_router
+from .assignments import router as assignments_router
+from .submissions import router as submissions_router
+from .admin import router as admin_router
+from .seed import seed_database
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql://codecheck_user:codecheck_password@db:5432/codecheck_db"
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Startup: veritabanını seed et
+    try:
+        seed_database()
+    except Exception as e:
+        print(f"⚠️ Seed sırasında hata (DB henüz hazır olmayabilir): {e}")
+    yield
+
+
+app = FastAPI(title="CodeCheck API", version="0.3.0", lifespan=lifespan)
+
+# ── CORS Middleware ───────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# SQLAlchemy engine and session initialization
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# ── Routers ───────────────────────────────────
+app.include_router(auth_router)
+app.include_router(assignments_router)
+app.include_router(submissions_router)
+app.include_router(admin_router)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
+# ── Root endpoints ────────────────────────────
 @app.get("/")
 def read_root():
-    return {"message": "CodeCheck API is running"}
+    return {"message": "CodeCheck API is running", "version": "0.3.0"}
+
 
 @app.get("/health")
-def health_check(db = Depends(get_db)):
+def health_check(db: Session = Depends(get_db)):
     try:
-        # Simple SELECT 1 query to check database connection
         db.execute(text("SELECT 1"))
         return {"status": "ok", "database": "connected"}
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
+        raise HTTPException(
+            status_code=503, detail=f"Database connection failed: {str(e)}"
+        )

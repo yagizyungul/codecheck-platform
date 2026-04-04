@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+# Sistem bağımlılıkları
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev gcc curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Bağımlılıkları kur
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# CPU-only torch (worker için GPU gerekmiyor, image daha küçük)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# sentence-transformers modelini build sırasında indir (startup hızlandırır)
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
+# Uygulama kodunu kopyala
+COPY . .
+
+ENV PYTHONPATH=/app
+
+CMD ["python", "worker/consumer.py"]

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
     return (
@@ -7,7 +7,7 @@ export default function Home() {
                 <div className="px-4 py-1.5 rounded-full border border-slate-700/60 bg-slate-800/40 backdrop-blur-md text-sm font-medium text-slate-300 shadow-sm flex items-center gap-3">
                     <span>CodeCheck Platform</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <code className="font-mono text-xs text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">Frontend</code>
+                    <code className="font-mono text-xs text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">v0.2</code>
                 </div>
             </div>
 
@@ -21,12 +21,12 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                    <a href="/student/dashboard" className="px-8 py-3 rounded-full bg-blue-600 hover:bg-blue-500 font-semibold transition-all duration-200 shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
-                        Student Dashboard
-                    </a>
-                    <a href="/teacher/dashboard" className="px-8 py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 font-semibold transition-all duration-200 shadow-[0_0_15px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2">
-                        Teacher Dashboard
-                    </a>
+                    <Link href="/login" className="px-8 py-3 rounded-full bg-blue-600 hover:bg-blue-500 font-semibold transition-all duration-200 shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2">
+                        Giriş Yap
+                    </Link>
+                    <Link href="/dashboard" className="px-8 py-3 rounded-full bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+                        Dashboard
+                    </Link>
                 </div>
             </div>
         </main>
