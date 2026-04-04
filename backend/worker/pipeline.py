@@ -97,6 +97,10 @@ def _get_similarity(db_session, submission_id: str, embedding: list[float]) -> f
             return float(rows[0])
     except Exception as e:
         print(f"⚠️ Similarity hesaplama hatası: {e}")
+        try:
+            db_session.rollback()
+        except Exception:
+            pass
     return 0.0
 
 
@@ -194,12 +198,13 @@ def process_submission(submission_id: str) -> None:
         import traceback
         traceback.print_exc()
         try:
+            db.rollback()
             submission = db.query(Submission).filter(Submission.id == submission_id).first()
             if submission:
                 submission.status = "error"
                 submission.feedback = f"İşleme hatası: {str(e)}"
                 db.commit()
         except Exception:
-            pass
+            db.rollback()
     finally:
         db.close()
