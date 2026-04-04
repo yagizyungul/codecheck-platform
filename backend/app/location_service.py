@@ -4,7 +4,7 @@ PostGIS submitted_lat/submitted_lng kolonlarına yazılır.
 ip-api.com ücretsiz API kullanır (aylık 45k istek limiti).
 """
 import os
-from typing import Optional, tuple
+from typing import Optional
 
 import requests
 
@@ -16,7 +16,7 @@ _DEFAULT_LAT = 41.0151
 _DEFAULT_LNG = 28.9795
 
 
-def get_location_from_ip(ip: Optional[str]) -> tuple[Optional[float], Optional[float]]:
+def get_location_from_ip(ip: Optional[str]) -> "tuple[Optional[float], Optional[float]]":
     """
     IP adresinden (lat, lng) döner.
     Özel/loopback IP veya hata durumunda varsayılan İstanbul konumu kullanılır.

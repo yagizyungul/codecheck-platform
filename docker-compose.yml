@@ -76,6 +76,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile.worker
     container_name: codecheck-worker
+    volumes:
+      - ./backend:/app
     environment:
       DATABASE_URL: postgresql://codecheck_user:codecheck_password@db:5432/codecheck_db
       MQ_DATABASE_URL: postgresql://mq_user:mq_password@mq-db:5432/mq_db
