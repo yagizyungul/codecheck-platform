@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
 import api from "../lib/api";
+import Link from "next/link";
 
 interface Assignment {
     id: string;
@@ -106,8 +107,16 @@ export default function DashboardPage() {
                 </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="space-y-3 animate-pulse">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="p-5 rounded-xl border border-slate-800/30 bg-slate-800/10 flex items-center justify-between">
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 bg-slate-800/60 rounded w-2/3" />
+                                    <div className="h-3 bg-slate-800/40 rounded w-1/2" />
+                                </div>
+                                <div className="w-24 h-8 bg-slate-800/40 rounded-full" />
+                            </div>
+                        ))}
                     </div>
                 ) : error ? (
                     <div className="text-center py-12">
@@ -125,8 +134,9 @@ export default function DashboardPage() {
                             const isOverdue = daysLeft !== null && daysLeft <= 0;
 
                             return (
-                                <div
+                                <Link
                                     key={assignment.id}
+                                    href={`/dashboard/assignments/${assignment.id}`}
                                     className="p-5 rounded-xl border border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 transition-all duration-200 cursor-pointer group flex items-center justify-between"
                                 >
                                     <div className="flex-1 min-w-0">
@@ -164,7 +174,7 @@ export default function DashboardPage() {
                                             </span>
                                         )}
                                     </div>
-                                </div>
+                                </Link>
                             );
                         })}
                     </div>

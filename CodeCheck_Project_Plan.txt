@@ -1,0 +1,522 @@
+
+CodeCheck
+AI Destekli Ödev Değerlendirme Platformu
+
+SE 4458  |  Software Architecture & Design of Modern Large Scale Systems
+Assignment 1  –  PostgreSQL Advanced Features Demo
+
+Takım Üyesi
+Rol
+Yağız Yüngül
+Backend & DB Lead
+Özgür Can Güngör
+Frontend & DevOps
+Mart 2026 – Nisan 2026
+Sunum: 15 Nisan 2026
+
+1. Proje Genel Bakışı
+CodeCheck; öğrencilerin kodlama ödevlerini gönderdiği, arka planda yapay zeka tabanlı kontrol ve test case değerlendirmesinin otomatik gerçekleştiği bir mini HackerRank platformudur. Projenin temel amacı PostgreSQL'in 7 gelişmiş extension'ını gerçek bir üretim senaryosunda kullanmaktır.
+
+1.1  Kullanılan PostgreSQL Extension'ları
+Extension
+Kategori
+Kullanım
+Kimin Görevi
+pgvector
+Vektör Benzerliği
+Öğrenci kodunu AI kodu ile karşılaştır, kopya tespit et
+Yağız
+pgmq
+Mesaj Kuyruğu
+Ödev submit → kuyruk → worker işleme zinciri
+Yağız
+hstore
+Anahtar-Değer
+Esnek test sonuçları (test_1=>pass, runtime=>142ms)
+Yağız
+PostGIS
+Coğrafi Veri
+IP konumu → 50m çapında aynı noktadan ödev tespiti
+Özgür
+ltree
+Hiyerarşi
+cs.datastructures.trees.inorder ders ağacı
+Özgür
+TimescaleDB
+Zaman Serisi
+Öğrenci gelişimi, sistem yükü, haftalık grafikler
+Özgür
+citext
+Metin Araması
+Büyük/küçük harf duyarsız email & username araması
+İkisi
+
+1.2  Teknoloji Stack'i
+Katman
+Teknoloji
+Kütüphane
+Geliştiren
+Veritabanı
+PostgreSQL 16
+timescaledb-ha Docker image
+Yağız
+Backend API
+FastAPI (Python)
+SQLAlchemy, pgvector, psycopg2
+Yağız
+AI Worker
+Python Worker
+sentence-transformers, LM Studio
+Yağız
+Frontend
+Next.js 14
+TypeScript, Tailwind CSS
+Özgür
+State Mgmt
+Zustand / SWR
+React Query, Axios
+Özgür
+Grafikler
+Chart.js
+react-chartjs-2
+Özgür
+DevOps
+Docker Compose
+GitHub Actions CI/CD
+Özgür
+Test
+Pytest / Jest
+Coverage raporlama
+İkisi
+
+2. GitHub Repository Kurulumu  (Gün 1 – 2 Mart)
+2.1  Repo Oluşturma Adımları
+Aşağıdaki adımları ilk toplantıda birlikte yapın:
+GitHub'a giriş → "New Repository" → İsim: codecheck-platform
+Visibility: Public (sunum için herkes görebilmeli)
+README.md, .gitignore (Python + Node), MIT License ekle
+Settings → Branches → "main" branch protection rule aç
+Settings → Collaborators → Özgür'ü ekle
+Projects → "New Project" → Board view → GitHub Project oluştur
+
+2.2  Branch Stratejisi
+Branch
+Amaç
+Kim açar?
+main
+Production-ready kod. Direkt commit yok.
+Otomatik (PR ile)
+develop
+Entegrasyon branch'i. Her feature buraya merge.
+İkisi
+feature/db-schema
+Veritabanı şeması geliştirmesi
+Yağız
+feature/api
+Backend API endpoint'leri
+Yağız
+feature/worker
+AI analiz worker'ı
+Yağız
+feature/frontend
+Next.js arayüz geliştirmesi
+Özgür
+feature/docker
+Docker Compose ve CI/CD
+Özgür
+
+2.3  Klasör Yapısı
+Klasör / Dosya
+İçerik
+codecheck-platform/
+Proje kök dizini
+├── backend/
+FastAPI uygulaması (Yağız)
+│   ├── app/
+API router, models, schemas, services
+│   ├── worker/
+pgmq consumer + AI analiz worker
+│   ├── db/
+Migration dosyaları (Alembic)
+│   └── tests/
+Pytest test dosyaları
+├── frontend/
+Next.js uygulaması (Özgür)
+│   ├── app/
+App Router sayfaları
+│   ├── components/
+Yeniden kullanılabilir UI bileşenleri
+│   └── lib/
+API client, hooks, utils
+├── db/
+SQL migration ve seed dosyaları
+│   ├── migrations/
+Hafta hafta schema değişiklikleri
+│   └── seeds/
+Demo verisi
+├── docker-compose.yml
+Tüm servisleri ayağa kaldırır
+├── docker-compose.dev.yml
+Geliştirme ortamı overrides
+└── docs/
+Mimari diyagramlar, sunum notları
+
+3. Haftalık Geliştirme Planı
+Çalışma takvimi: Hafta sonu toplantıları Cumartesi veya Pazar 11:00–13:00. Hafta içi bireysel geliştirme her akşam 1–2 saat. Toplam çalışma ~6 hafta.
+  Yağız Yüngül (Backend & DB)       Özgür Can Güngör (Frontend & DevOps)       İkisi Birlikte
+
+HAFTA 1  |  1 Mart – 8 Mart 2026  |  Temel Kurulum
+📅 1 Mart 2026 Pazar  |  11:00 – 13:00  |  Gündem: GitHub repo kurulumu + mimari kararları + görev dağılımı
+
+Gün / Tarih
+Kime
+Görev
+Çıktı / Hedef
+1 Mar (Paz)
+Toplantı
+İkisi
+GitHub repo aç → branch yapısını kur → README yaz → Docker Compose taslağı hazırla
+codecheck-platform repo açık, develop branch mevcut, README tam
+2-3 Mar
+Yağız
+timescaledb-ha Docker image test et → 01_schema.sql dosyasını bitir → tüm 7 extension CREATE EXTENSION çalışıyor
+Veritabanı ayakta, tüm extension'lar aktif
+2-3 Mar
+Özgür
+Next.js 14 projesi oluştur (npx create-next-app) → Tailwind ayarla → sayfa iskeletini kur (login, dashboard, submit, admin)
+Frontend boilerplate hazır, sayfalar açılıyor
+4-6 Mar
+Yağız
+FastAPI projesi kur → SQLAlchemy modelleri yaz (User, Assignment, Submission) → /health endpoint → DB bağlantısı test et
+Backend ayakta, DB ile konuşuyor
+4-6 Mar
+Özgür
+docker-compose.yml'e frontend + nginx ekle → GitHub Actions workflow dosyası oluştur (lint + build check)
+docker-compose up ile tüm servisler ayakta
+7-8 Mar
+İkisi
+Code review: branch → PR → merge pratiği yap → ESLint + Black + Prettier ayarla → İlk milestone: "infra hazır"
+develop branch'e ilk gerçek PR merge edildi
+
+HAFTA 2  |  9 Mart – 15 Mart 2026  |  Veritabanı + API Temeli
+📅 14 Mart 2026 Cumartesi  |  11:00 – 13:00  |  Gündem: DB migration review + API endpoint test + pgmq kuyruk demosu
+
+Gün / Tarih
+Kime
+Görev
+Çıktı / Hedef
+9-11 Mar
+Yağız
+Alembic migration sistemi kur → ltree + citext tablolarını oluştur (users, course_tree, assignments) → seed verisi yaz
+users, course_tree, assignments tabloları tam ve dolu
+9-11 Mar
+Özgür
+Next.js Auth sayfası: login form + JWT token saklama → axios instance + API interceptor (token ekleme, 401 yönlendirme)
+Login çalışıyor, token yönetimi tamamlandı
+12-14 Mar
+Yağız
+pgmq extension kur → submission_queue oluştur → /submissions POST endpoint → kuyruğa mesaj atan servis fonksiyonu yaz
+Ödev submit edince kuyrukta görünüyor
+12-14 Mar
+Özgür
+Dashboard layout bileşeni: sidebar + navbar → /dashboard sayfası → /assignments listesi API çağrısı entegre et
+Dashboard açılıyor, ödev listesi görünüyor
+15 Mar
+İkisi
+Toplantı: frontend login → backend /auth endpoint entegrasyonu test et → Postman collection oluştur → API dökümantasyonu (Swagger)
+End-to-end: login → token al → dashboard aç çalışıyor
+
+HAFTA 3  |  16 Mart – 22 Mart 2026  |  Çekirdek Özellikler (pgvector + hstore)
+📅 21 Mart 2026 Cumartesi  |  11:00 – 13:00  |  Gündem: pgvector AI tespiti canlı demo + hstore test sonuçları görüntüleme
+
+Gün / Tarih
+Kime
+Görev
+Çıktı / Hedef
+16-18 Mar
+Yağız
+sentence-transformers kur → get_embedding() fonksiyonu → submissions tablosuna code_embedding vector(384) sütunu ekle → embedding kaydetme servisi
+Kod submit edilince DB'de vektör saklanıyor
+16-18 Mar
+Özgür
+Kod editörü bileşeni: CodeMirror veya Monaco Editor entegre et → /submit sayfası: dil seçimi + kod gönderme formu → submit sonrası "bekliyor" animasyonu
+Öğrenci kodu yazıp gönderebiliyor
+19-21 Mar
+Yağız
+AI benzerlik sorgusu yaz (cosine similarity) → LM Studio'da test modeli kur → ai_reference_embeddings tablosunu doldur → AI skor hesaplama servisi
+AI benzerlik skoru hesaplanıp DB'ye yazılıyor
+19-21 Mar
+Özgür
+Sonuç sayfası: submission status polling (her 3 sn API'a sor) → test skorunu ve AI skorunu göster → hstore test detaylarını tablo olarak göster
+Öğrenci sonuçlarını görebiliyor
+22 Mar
+İkisi
+Tam akış testi: öğrenci kodunu submit et → worker işlesin → sonuç ekranda görünsün. Bug fix toplantısı.
+Submit → process → görüntüle akışı end-to-end çalışıyor
+
+HAFTA 4  |  23 Mart – 29 Mart 2026  |  PostGIS + ltree + Worker Tamamlama
+📅 28 Mart 2026 Cumartesi  |  11:00 – 13:00  |  Gündem: PostGIS kopya tespiti demosu + ltree breadcrumb + admin panel
+
+Gün / Tarih
+Kime
+Görev
+Çıktı / Hedef
+23-25 Mar
+Yağız
+Python worker'ı tam hale getir: pgmq consumer döngüsü → 5 adım işlem → test case sandbox (exec() ile) → hstore kaydet → timescaledb metrik yaz
+Worker başlatılınca kuyruktan alıp işliyor
+23-25 Mar
+Özgür
+PostGIS: submission_locations tablosunu API'a bağla → IP'den konum çeken servis (ipapi.co) → yakın öğrenci tespiti sorgusu → admin panelde kırmızı uyarı
+Admin panelde konum uyarıları görünüyor
+26-28 Mar
+Yağız
+ltree: course_tree API endpoint'leri → "cs.datastructures altındaki tüm ödevler" sorgusu → breadcrumb verisi döndüren endpoint → test et
+Hiyerarşik ödev listesi API'dan geliyor
+26-28 Mar
+Özgür
+ltree breadcrumb bileşeni → ders ağacı sidebar (collapse/expand) → TimescaleDB: haftalık skor grafiği (Chart.js LineChart) → öğrenci profil sayfası
+Ders ağacı ve performans grafiği görünüyor
+29 Mar
+İkisi
+Tüm 7 extension'ın çalıştığını doğrula → eksikleri tamamla → beta kullanıcı testi (birbirlerinizin hesabıyla deneyin)
+Beta testi tamamlandı, 7/7 extension aktif
+
+HAFTA 5  |  30 Mart – 5 Nisan 2026  |  Polish + Test + Optimizasyon
+📅 4 Nisan 2026 Cumartesi  |  11:00 – 13:00  |  Gündem: UI iyileştirme review + test coverage + sunum akışı prova
+
+Gün / Tarih
+Kime
+Görev
+Çıktı / Hedef
+30 Mar - 1 Nis
+Yağız
+Pytest: API test coverage %80+ → pgvector HNSW index optimizasyonu → error handling iyileştir → API rate limiting ekle
+Test coverage raporu, API stabil çalışıyor
+30 Mar - 1 Nis
+Özgür
+Responsive tasarım düzelt (mobil uyumluluk) → loading skeletons ekle → hata mesajları toast notification → koyu/açık tema toggle
+UI production kalitesinde, responsive
+2-4 Nis
+Yağız
+Admin dashboard backend: tüm öğrenci sonuçları → AI flag raporu → TimescaleDB haftalık özet endpoint → PostGIS şüpheli konumlar endpoint
+Admin API'ları tamamlandı
+2-4 Nis
+Özgür
+Admin dashboard frontend: öğrenci tablosu (sort/filter) → AI flag'li ödevleri kırmızıyla göster → sistem metrikleri (işlem/dakika grafiği)
+Admin paneli tüm özelliklerle çalışıyor
+5 Nis
+İkisi
+Tam sistem testi: 2 öğrenci hesabı + 1 admin hesabıyla tüm senaryoları dene → GitHub README güncelle → demo video çek (ihtiyaç olursa)
+Tüm senaryolar test edildi, README tam
+
+HAFTA 6  |  6 Nisan – 12 Nisan 2026  |  Sunum Hazırlığı + Son Testler
+📅 11 Nisan 2026 Cumartesi  |  11:00 – 13:00  |  Gündem: Sunum provası (tam 15 dakika) + son bug fix + Moodle yükleme
+
+Gün / Tarih
+Kime
+Görev
+Çıktı / Hedef
+6-8 Nis
+Yağız
+Sunum slide'larının teknik kısmını hazırla (pgvector, pgmq, hstore demosu) → demo scriptini yaz (hangi komut sırasıyla girilecek) → LM Studio'yu hazır et
+Teknik demo scripti yazıldı
+6-8 Nis
+Özgür
+Sunum slide'larının görsel kısmını hazırla (PostGIS, ltree, TimescaleDB demosu) → mimari diyagramı güzel çiz (draw.io veya Excalidraw)
+Mimari diyagram ve slide'lar hazır
+9-10 Nis
+İkisi
+Tam sunum provası (15 dakika): Yağız backend'i, Özgür frontend'i anlatır → birbirinize soru sorun → zayıf noktaları tespit edin
+İlk prova tamamlandı, notlar alındı
+11 Nis
+İkisi
+Geri bildirimlere göre düzelt → İkinci prova → GitHub repo'yu temizle (gereksiz branch sil, README son hali) → Moodle'a yükle
+Moodle'a yüklendi, GitHub linki paylaşıldı
+12 Nis
+İkisi
+Son gün: sadece son kontroller → docker-compose up çalışıyor mu? → demo veritabanı sıfırla ve seed'le → sunum gününe hazır
+Proje teslim edildi ✓
+
+4. Hafta Sonu Toplantı Protokolü
+Her toplantı aşağıdaki yapıda işlemelidir:
+Süre
+Bölüm
+İçerik
+0-10 dk
+Check-in
+Hafta içinde neler yapıldı? GitHub commit'ler gözden geçirilir. Blocker varsa paylaşılır.
+10-60 dk
+Geliştirme
+Canlı coding session veya birlikte review. Ekran paylaşımlı çalışın. Birbirinizin kodunu okuyun.
+60-90 dk
+Entegrasyon
+Frontend-backend bağlantısını test et. Yeni özellikleri uçtan uca dene. Hataları birlikte çöz.
+90-110 dk
+Planlama
+Gelecek hafta görevlerini belirle. GitHub Project'e issue aç ve assign et. Öncelikleri sırala.
+110-120 dk
+Check-out
+Haftaya toplantı saatini onayla. Her kişi "Bu hafta bitireceğim" diye 1 şey söyler.
+
+4.1  GitHub Issue ve PR Şablonu
+Her görev için GitHub'da bir issue açın ve şu formatı kullanın:
+Issue Şablonu
+PR Şablonu
+[W2] pgmq submission kuyruğu entegrasyonu
+
+Görev: /submissions POST endpoint kuyruğa mesaj atsın
+Atanan: Yağız
+Sprint: Hafta 2
+Etiket: backend, database
+## Değişiklikler
+- pgmq.send() fonksiyonu eklendi
+- Submission servisi güncellendi
+
+## Test
+- [ ] Unit test yazıldı
+- [ ] Manuel test yapıldı
+
+Fixes #12
+
+5. Sunum Hazırlığı  (15 Nisan 2026)
+5.1  Slide Yapısı  (12-14 slayt önerilir)
+#
+Başlık
+İçerik
+Süre
+Kim?
+1
+Kapak
+Proje adı, takım üyeleri, tarih
+30 sn
+İkisi
+2
+Motivasyon
+"Neden bu proje?" – HackerRank'in problemi, AI ile kopya patlıyor
+1 dk
+İkisi
+3
+Mimari Genel Bakış
+Submit → pgmq → Worker → 7 extension akış şeması
+1 dk
+Yağız
+4
+Canlı Demo 1: pgmq
+Terminal: mesaj gönder, kuyruğu göster, worker'ın aldığını izle
+2 dk
+Yağız
+5
+Canlı Demo 2: pgvector
+2 kod submit et → AI skor farkını göster → cosine similarity sorgusu
+2 dk
+Yağız
+6
+Canlı Demo 3: hstore
+Test sonuçlarını psql'de göster → frontend'de tabloyu göster
+1 dk
+Yağız
+7
+Canlı Demo 4: PostGIS
+2 yakın konumdan ödev → admin panelde kırmızı uyarı
+1.5 dk
+Özgür
+8
+Canlı Demo 5: ltree
+Breadcrumb navigasyon → "tüm alt ödevler" SQL sorgusu
+1.5 dk
+Özgür
+9
+Canlı Demo 6: TimescaleDB
+Haftalık gelişim grafiği → time_bucket sorgusu
+1 dk
+Özgür
+10
+Canlı Demo 7: citext
+Büyük harfli email araması → aynı kullanıcıyı bulduğunu göster
+30 sn
+Özgür
+11
+Mimari Kararlar
+"Neden pgmq Kafka yerine?", "Neden PostGIS?" sorularına cevaplar
+1 dk
+İkisi
+12
+Öğrendiklerimiz
+En zor kısım, production'da kullanılabilir mi, ne geliştirilebilir
+1 dk
+İkisi
+13
+Sorular
+GitHub QR kodu + demo URL
+—
+İkisi
+
+5.2  Demo Günü Kontrol Listesi
+docker-compose up -d ile tüm servisler ayakta
+Veritabanı seed'lendi (örnek kullanıcılar, ödevler mevcut)
+LM Studio açık ve localhost:1234'te model yüklü
+Python worker arka planda çalışıyor
+Browser'da hem öğrenci hem admin hesabı açık (farklı sekme)
+psql terminali açık (SQL sorgularını canlı göstermek için)
+İnternet bağlantısı yedek: pgvector sadece local çalışır, sorun olmaz
+Demo script yazılı kağıtta hazır (ezberleme, bakılabilir)
+
+5.3  Sık Sorulan Sorulara Hazırlık
+Beklenen Soru
+Hazırlanan Cevap
+Neden pgmq, Kafka değil?
+Kafka ayrı bir servis, extra infra gerektirir. pgmq zaten PostgreSQL içinde çalışır, daha az operasyonel yük. Demo için idealdir.
+pgvector ne kadar doğru?
+Eğer kod birebir aynı değilse benzerliği garantilemez. Bizim sistemimizde bir gösterge, kesin karar vermez. Human review tetikler.
+PostGIS'i VPN atlatabilir mi?
+Evet, bu bir limitasyon. Sistemi tek başına değil, pgvector + PostGIS + kod benzerliği üçlüsüyle düşünmek lazım.
+TimescaleDB neden normal tablo değil?
+Çok fazla metrik verisi zamanla yığılır. Hypertable otomatik partition eder, time_bucket() sorguları çok daha hızlı.
+Bu sistem production'a gider mi?
+Temel mimari sağlam. Eksikler: Docker sandbox (güvenli kod çalıştırma), gerçek LLM API entegrasyonu, autoscaling.
+
+6. Milestones & Teslim Takvimi
+Tarih
+Milestone
+Tamamlanan
+Durum
+1 Mar 2026
+M0: Kickoff
+GitHub repo, branch yapısı, görev dağılımı
+◻ Bekliyor
+8 Mar 2026
+M1: Infra
+Docker Compose ayakta, schema hazır, frontend boilerplate
+◻ Bekliyor
+15 Mar 2026
+M2: API Temeli
+Login çalışıyor, submit endpoint var, pgmq kuyruk aktif
+◻ Bekliyor
+22 Mar 2026
+M3: Core Logic
+pgvector + hstore tamamlandı, worker çalışıyor
+◻ Bekliyor
+29 Mar 2026
+M4: Tüm Ext.
+7/7 extension aktif, admin panel çalışıyor
+◻ Bekliyor
+5 Nis 2026
+M5: Beta
+Tam sistem testi, bug fix, README tamamlandı
+◻ Bekliyor
+11 Nis 2026
+M6: Sunum Prov.
+Slide hazır, 2. prova tamamlandı, Moodle'a yüklendi
+◻ Bekliyor
+12 Nis 2026
+M7: Teslim
+Proje tamamlandı, GitHub temiz, demo hazır
+◻ Bekliyor
+15 Nis 2026
+SUNUM GÜNÜ
+CodeCheck canlı demo + slayt sunumu
+🎯 Hedef
+
+
+Başarılar! 🚀  |  Yağız & Özgür  |  CodeCheck 2026

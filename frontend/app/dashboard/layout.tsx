@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/auth";
 import Sidebar from "../components/Sidebar";
@@ -13,6 +13,7 @@ export default function DashboardLayout({
 }) {
     const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
@@ -37,10 +38,10 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-slate-950">
-            <Sidebar />
-            <div className="ml-64 flex flex-col min-h-screen">
-                <Navbar />
-                <main className="flex-1 p-8">{children}</main>
+            <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+            <div className="lg:ml-64 flex flex-col min-h-screen">
+                <Navbar onMobileToggle={() => setMobileOpen(!mobileOpen)} />
+                <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
             </div>
         </div>
     );
