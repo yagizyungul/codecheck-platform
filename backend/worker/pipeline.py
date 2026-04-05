@@ -25,19 +25,20 @@ from app.location_service import get_location_from_ip
 
 LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://host.docker.internal:1234/v1/chat/completions")
 LM_STUDIO_MODEL = os.getenv("LM_STUDIO_MODEL", "local-model")
-LM_STUDIO_TIMEOUT = int(os.getenv("LM_STUDIO_TIMEOUT", "30"))
+LM_STUDIO_TIMEOUT = int(os.getenv("LM_STUDIO_TIMEOUT", "60"))
 
 
 def _ai_score_code(code: str, language: str) -> tuple[int, str]:
     """
-    LM Studio'ya HTTP isteği atarak kod kalitesi skoru alır.
-    LM Studio çalışmıyorsa basit heuristic fallback kullanır.
-    Döner: (score 0-100, feedback string)
+    Ollama/LM Studio'ya HTTP isteği atarak kod kalitesi skoru alır.
+    Hata durumunda veya model 0 dönerse heuristic fallback kullanır.
     """
-    prompt = f"""Aşağıdaki {language} kodunu değerlendir ve 0-100 arası bir puan ver.
-Sadece JSON formatında yanıt ver: {{"score": <int>, "feedback": "<string>"}}
+    system_prompt = "You are an expert code reviewer. You must respond ONLY with a JSON object in the format: {\"score\": <int 0-100>, \"feedback\": \"<turkish sentence>\"}. No other text allowed."
+    user_prompt = f"""Score this {language} code based on logic and quality. 
+A working solution should score at least 60.
+If the code is extremely short or empty, score <= 20.
 
-Kod:
+Code:
 ```{language}
 {code[:2000]}
 ```"""
@@ -47,33 +48,44 @@ Kod:
             LM_STUDIO_URL,
             json={
                 "model": LM_STUDIO_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.1,
-                "max_tokens": 200,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": 0.2,
+                "max_tokens": 150,
             },
             timeout=LM_STUDIO_TIMEOUT,
         )
-        content = resp.json()["choices"][0]["message"]["content"]
+        data = resp.json()
+        content = data["choices"][0]["message"]["content"]
+        
         # JSON'u parse et
         import re
         match = re.search(r'\{.*\}', content, re.DOTALL)
         if match:
             result = json.loads(match.group())
-            return int(result.get("score", 70)), str(result.get("feedback", ""))
+            score = int(result.get("score", 0))
+            feedback = str(result.get("feedback", ""))
+            if 1 <= score <= 100:
+                print(f"🤖 AI skoru: {score}")
+                return score, feedback
+        
+        print("⚠️ AI geçersiz yanıt verdi veya 0 döndü, fallback kullanılıyor")
     except Exception as e:
-        print(f"⚠️ LM Studio erişilemez ({e}), heuristic skor kullanılıyor")
+        print(f"⚠️ AI servis hatası ({e}), fallback kullanılıyor")
 
     # Fallback: basit heuristic
     lines = len(code.strip().splitlines())
     has_docstring = '"""' in code or "'''" in code
     has_functions = "def " in code or "function " in code
     has_comments = "#" in code or "//" in code
-    score = min(100, 50 + lines * 2 + (10 if has_docstring else 0) +
+    score = min(95, 40 + lines * 2 + (10 if has_docstring else 0) +
                 (10 if has_functions else 0) + (10 if has_comments else 0))
-    return score, "Otomatik değerlendirme (AI bağlantısı yok)"
+    return score, "Otomatik değerlendirme (AI bağlantısı yok veya hatalı yanıt)"
 
 
-def _get_similarity(db_session, submission_id: str, embedding: list[float]) -> float:
+def _get_similarity(db_session, submission_id: str, assignment_id: str, embedding: list[float]) -> float:
     """
     pgvector cosine similarity ile aynı ödevdeki diğer submission'larla karşılaştırır.
     En yüksek benzerlik skorunu döner (0.0 – 1.0).
@@ -82,17 +94,20 @@ def _get_similarity(db_session, submission_id: str, embedding: list[float]) -> f
         from sqlalchemy import text
         # Embedding'i string formatına çevir
         embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
-        rows = db_session.execute(text("""
+        
+        # Daha güvenli ve direkt sorgu (assignment_id parametre olarak geliyor)
+        sid_str = str(submission_id)
+        aid_str = str(assignment_id)
+        rows = db_session.execute(text(f"""
             SELECT
-                MAX(1 - (s.code_embedding <=> :emb::vector))::float AS max_similarity
+                MAX(1 - (s.code_embedding <=> '{embedding_str}'::vector))::float AS max_similarity
             FROM submissions s
             WHERE
-                s.id != :sid
+                s.id::text != '{sid_str}'
+                AND s.assignment_id::text = '{aid_str}'
                 AND s.code_embedding IS NOT NULL
-                AND s.assignment_id = (
-                    SELECT assignment_id FROM submissions WHERE id = :sid
-                )
-        """), {"emb": embedding_str, "sid": submission_id}).fetchone()
+        """)).fetchone()
+        
         if rows and rows[0] is not None:
             return float(rows[0])
     except Exception as e:
@@ -127,7 +142,13 @@ def process_submission(submission_id: str) -> None:
         print(f"🧠 [2/5] Kod embedding üretiliyor...")
         embedding = embed_code(submission.code_text)
         if embedding:
-            submission.code_embedding = embedding
+            # ORM yerine raw SQL — pgvector ::vector cast için zorunlu
+            # f-string kullanıyoruz çünkü :param::type SQLAlchemy ile çakışıyor
+            embedding_str = "[" + ",".join(str(x) for x in embedding) + "]"
+            sid_str = str(submission_id)
+            db.execute(text(
+                f"UPDATE submissions SET code_embedding = '{embedding_str}'::vector WHERE id = '{sid_str}'"
+            ))
             db.commit()
             print(f"✅ Embedding hazır (384-dim)")
         else:
@@ -137,9 +158,9 @@ def process_submission(submission_id: str) -> None:
         print(f"🔍 [3/5] Benzerlik kontrolü yapılıyor...")
         similarity = 0.0
         if embedding:
-            similarity = _get_similarity(db, submission_id, embedding)
+            similarity = _get_similarity(db, submission_id, submission.assignment_id, embedding)
             submission.similarity_score = similarity
-            if similarity > 0.90:
+            if similarity > 0.85:
                 submission.is_flagged = True
                 print(f"🚨 Yüksek benzerlik tespit edildi: {similarity:.2%} → flagged!")
             else:
