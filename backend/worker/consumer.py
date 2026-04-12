@@ -19,7 +19,7 @@ POLL_INTERVAL = int(os.getenv("WORKER_POLL_INTERVAL", "5"))  # saniye
 
 
 def run():
-    print("🚀 CodeCheck Worker başlatıldı")
+    print("  CodeCheck Worker başlatıldı")
     print(f"   Poll aralığı: {POLL_INTERVAL}s")
     print("   Kuyruk: submission_queue")
     print("─" * 40)

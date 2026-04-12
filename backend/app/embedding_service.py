@@ -15,9 +15,9 @@ def _get_model():
     if _model is None:
         from sentence_transformers import SentenceTransformer
         model_name = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
-        print(f"🤖 Embedding modeli yükleniyor: {model_name}")
+        print(f"Embedding modeli yükleniyor: {model_name}")
         _model = SentenceTransformer(model_name)
-        print("✅ Embedding modeli hazır")
+        print("Embedding modeli hazır")
     return _model
 
 
