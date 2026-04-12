@@ -19,6 +19,8 @@ from psycopg2.extras import execute_values
 from sqlalchemy import text
 
 # PYTHONPATH=/app olduğu için app.* import çalışır
+from sqlalchemy import text
+
 from app.database import SessionLocal
 from app.models import Submission, SubmissionMetric
 from app.embedding_service import embed_code
