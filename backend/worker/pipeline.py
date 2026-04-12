@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 import requests
 import psycopg2
 from psycopg2.extras import execute_values
+from sqlalchemy import text
 
 # PYTHONPATH=/app olduğu için app.* import çalışır
 from app.database import SessionLocal
@@ -68,7 +69,7 @@ Code:
             score = int(result.get("score", 0))
             feedback = str(result.get("feedback", ""))
             if 1 <= score <= 100:
-                print(f"🤖 AI skoru: {score}")
+                print(f" AI skoru: {score}")
                 return score, feedback
         
         print("⚠️ AI geçersiz yanıt verdi veya 0 döndü, fallback kullanılıyor")
@@ -188,12 +189,17 @@ def process_submission(submission_id: str) -> None:
         # ── ADIM 5: FINALIZE ──────────────────────
         print(f"📍 [5/5] Konum çözülüyor ve metrik yazılıyor...")
 
-        # PostGIS: IP'den konum çöz
-        if submission.ip_address:
-            lat, lng = get_location_from_ip(str(submission.ip_address))
-            if lat and lng:
-                submission.submitted_lat = lat
-                submission.submitted_lng = lng
+        # PostGIS: Konum çöz (Manuel koordinat yoksa IP'den çöz)
+        if submission.submitted_lat is None or submission.submitted_lng is None:
+            if submission.ip_address:
+                lat, lng = get_location_from_ip(str(submission.ip_address))
+                if lat and lng:
+                    submission.submitted_lat = lat
+                    submission.submitted_lng = lng
+                    print(f"📍 IP'den konum atandı: {lat}, {lng}")
+        else:
+            print(f"📍 Manuel konum kullanılıyor: {submission.submitted_lat}, {submission.submitted_lng}")
+        
 
         # Status = done
         submission.status = "done"

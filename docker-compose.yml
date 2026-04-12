@@ -85,6 +85,7 @@ services:
       LM_STUDIO_URL: http://host.docker.internal:11434/v1/chat/completions
       LM_STUDIO_MODEL: qwen2.5-coder:7b
       WORKER_POLL_INTERVAL: "5"
+      PYTHONUNBUFFERED: "1"
     command: python worker/consumer.py
     depends_on:
       db:

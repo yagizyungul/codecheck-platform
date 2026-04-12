@@ -5,12 +5,14 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from .database import get_db
 from .models import Submission, Assignment
 from .schemas import SubmissionRequest, SubmissionResponse, SubmissionListResponse
 from .auth import decode_access_token
 from .mq_database import send_submission
+from .location_service import get_location_from_ip
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -36,6 +38,14 @@ def submit_code(
     Frontend submission_id ile GET /submissions/{id} üzerinden polling yapar.
     """
     payload = decode_access_token(credentials.credentials)
+    
+    # Rol kontrolü: Öğretmenler ve Adminler ödev gönderemez
+    if payload.get("role") in ("teacher", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Öğretmenler veya yöneticiler ödev gönderemez. Lütfen bir öğrenci hesabı kullanın."
+        )
+        
     student_id = uuid.UUID(payload["sub"])
 
     # Assignment var mı kontrol
@@ -46,6 +56,12 @@ def submit_code(
     # IP adresini al
     ip_address = _get_client_ip(request)
 
+    # Koordinatları belirle: önce custom, yoksa IP'den çöz
+    lat = req.custom_lat
+    lng = req.custom_lng
+    if lat is None or lng is None:
+        lat, lng = get_location_from_ip(ip_address)
+
     # Submission'ı DB'ye yaz (status: pending)
     submission = Submission(
         assignment_id=req.assignment_id,
@@ -54,6 +70,8 @@ def submit_code(
         language=req.language,
         status="pending",
         ip_address=ip_address,
+        submitted_lat=lat,
+        submitted_lng=lng,
     )
     db.add(submission)
     db.commit()

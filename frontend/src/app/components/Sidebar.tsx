@@ -50,8 +50,18 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     const { user, logout } = useAuth();
     const { toast } = useToast();
 
-    const isTeacher = user?.role === "teacher" || user?.role === "admin";
-    const links = isTeacher ? [...studentLinks, ...teacherExtraLinks] : studentLinks;
+    const currentRole = user?.role?.toLowerCase();
+    const isTeacher = currentRole === "teacher" || currentRole === "admin";
+    
+    // Debug: Rolü konsola yazdır (sorun devam ederse buradan kontrol edeceğiz)
+    // console.log("Current User Role:", user?.role);
+
+    // Filtrelenmiş linkler: Öğretmenler "Gönderimler" sayfasını görmemeli.
+    const baseLinks = isTeacher 
+        ? studentLinks.filter(l => l.href !== "/dashboard/submissions")
+        : studentLinks;
+        
+    const links = isTeacher ? [...baseLinks, ...teacherExtraLinks] : baseLinks;
 
     const isLinkActive = (href: string, exact?: boolean) => {
         if (exact) return pathname === href;
@@ -69,29 +79,29 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             )}
 
             <aside
-                className={`fixed left-0 top-0 h-screen w-64 bg-slate-900/95 backdrop-blur-xl border-r border-slate-800/60 flex flex-col z-50 transition-transform duration-300 ease-in-out
+                className={`fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 flex flex-col z-50 transition-transform duration-300 ease-in-out
                     lg:translate-x-0
                     ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
                 `}
             >
                 {/* Logo */}
-                <div className="p-6 border-b border-slate-800/60 flex items-center justify-between">
+                <div className="p-6 border-b border-slate-200 flex items-center justify-between">
                     <Link href="/dashboard" className="flex items-center gap-3 group" onClick={onMobileClose}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow duration-300">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm group-hover:bg-blue-700 transition-colors duration-300">
                             <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
                             </svg>
                         </div>
                         <div>
-                            <h2 className="font-bold text-white text-lg tracking-tight">CodeCheck</h2>
-                            <p className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Platform</p>
+                            <h2 className="font-bold text-slate-900 text-lg tracking-tight">CodeCheck</h2>
+                            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Platform</p>
                         </div>
                     </Link>
 
                     {/* Mobile close button */}
                     <button
                         onClick={onMobileClose}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition lg:hidden"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition lg:hidden"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -101,7 +111,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
                 {/* Navigation */}
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest px-3 mb-3">
+                    <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest px-3 mb-3">
                         Menü
                     </p>
                     {links.map((link) => {
@@ -113,18 +123,14 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                                 onClick={onMobileClose}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group
                                     ${isActive
-                                        ? isTeacher
-                                            ? "bg-emerald-500/15 text-emerald-400 shadow-sm"
-                                            : "bg-blue-500/15 text-blue-400 shadow-sm"
-                                        : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                                        ? "bg-blue-50 text-blue-600 shadow-none"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                                     }`}
                             >
                                 <span
                                     className={`transition-colors duration-200 ${isActive
-                                            ? isTeacher
-                                                ? "text-emerald-400"
-                                                : "text-blue-400"
-                                            : "text-slate-500 group-hover:text-slate-300"
+                                            ? "text-blue-600"
+                                            : "text-slate-400 group-hover:text-slate-600"
                                         }`}
                                 >
                                     {link.icon}
@@ -132,8 +138,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                                 {link.label}
                                 {isActive && (
                                     <span
-                                        className={`ml-auto w-1.5 h-1.5 rounded-full animate-pulse ${isTeacher ? "bg-emerald-400" : "bg-blue-400"
-                                            }`}
+                                        className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600"
                                     />
                                 )}
                             </Link>
@@ -144,7 +149,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     {isTeacher && (
                         <>
                             <div className="pt-4 pb-1">
-                                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest px-3">
+                                <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest px-3">
                                     Yönetim
                                 </p>
                             </div>
@@ -153,13 +158,10 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 </nav>
 
                 {/* User info at bottom */}
-                <div className="p-4 border-t border-slate-800/60">
+                <div className="p-4 border-t border-slate-200">
                     <div className="flex items-center gap-3 px-3 py-2">
                         <div
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold border ${isTeacher
-                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/20"
-                                    : "bg-blue-500/20 text-blue-400 border-blue-500/20"
-                                }`}
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200"
                         >
                             {user?.full_name
                                 ?.split(" ")
@@ -168,7 +170,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                                 .slice(0, 2) || "?"}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">
+                            <p className="text-sm font-medium text-slate-900 truncate">
                                 {user?.full_name || "Kullanıcı"}
                             </p>
                             <p className="text-[11px] text-slate-500 capitalize">{user?.role || "—"}</p>
@@ -178,7 +180,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                                 toast("Başarıyla çıkış yapıldı", "success");
                                 setTimeout(() => logout(), 500);
                             }}
-                            className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition duration-200"
+                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition duration-200"
                             title="Çıkış Yap"
                         >
                             <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">

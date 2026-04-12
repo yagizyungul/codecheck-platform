@@ -56,31 +56,25 @@ export default function DashboardPage() {
         <div className="space-y-8 animate-fade-in-up">
             {/* Welcome header */}
             <div>
-                <h1 className="text-3xl font-bold text-white">
-                    Hoş geldin,{" "}
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
-                        {user?.full_name || "Kullanıcı"}
-                    </span>
-                    👋
+                <h1 className="text-3xl font-bold text-slate-900">
+                    Hoş geldin, {user?.full_name || "Kullanıcı"}
                 </h1>
-                <p className="text-slate-400 mt-1">
+                <p className="text-slate-500 mt-1">
                     İşte güncel ödevlerin ve istatistiklerin.
                 </p>
             </div>
 
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition" />
-                    <p className="text-slate-400 text-sm font-medium">Toplam Ödev</p>
-                    <p className="text-4xl font-extrabold text-blue-400 mt-2 tracking-tight">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                    <p className="text-slate-500 text-sm font-medium">Toplam Ödev</p>
+                    <p className="text-4xl font-extrabold text-blue-600 mt-2 tracking-tight">
                         {loading ? "—" : assignments.length}
                     </p>
                 </div>
-                <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-emerald-500/20 transition" />
-                    <p className="text-slate-400 text-sm font-medium">Yaklaşan</p>
-                    <p className="text-4xl font-extrabold text-emerald-400 mt-2 tracking-tight">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                    <p className="text-slate-500 text-sm font-medium">Yaklaşan</p>
+                    <p className="text-4xl font-extrabold text-emerald-600 mt-2 tracking-tight">
                         {loading
                             ? "—"
                             : assignments.filter(
@@ -88,20 +82,19 @@ export default function DashboardPage() {
                             ).length}
                     </p>
                 </div>
-                <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6 relative overflow-hidden group hover:border-indigo-500/30 transition-all duration-300">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-indigo-500/20 transition" />
-                    <p className="text-slate-400 text-sm font-medium">Rol</p>
-                    <p className="text-4xl font-extrabold text-indigo-400 mt-2 tracking-tight capitalize">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+                    <p className="text-slate-500 text-sm font-medium">Rol</p>
+                    <p className="text-4xl font-extrabold text-indigo-600 mt-2 tracking-tight capitalize">
                         {user?.role || "—"}
                     </p>
                 </div>
             </div>
 
             {/* Assignments list */}
-            <div className="bg-slate-900/80 border border-slate-800/60 rounded-2xl p-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-white">Ödev Listesi</h2>
-                    <span className="text-xs text-slate-500 bg-slate-800/60 px-3 py-1 rounded-full">
+                    <h2 className="text-xl font-semibold text-slate-900">Ödev Listesi</h2>
+                    <span className="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full font-medium">
                         {assignments.length} ödev
                     </span>
                 </div>
@@ -109,18 +102,18 @@ export default function DashboardPage() {
                 {loading ? (
                     <div className="space-y-3 animate-pulse">
                         {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="p-5 rounded-xl border border-slate-800/30 bg-slate-800/10 flex items-center justify-between">
+                            <div key={i} className="p-5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between">
                                 <div className="flex-1 space-y-2">
-                                    <div className="h-4 bg-slate-800/60 rounded w-2/3" />
-                                    <div className="h-3 bg-slate-800/40 rounded w-1/2" />
+                                    <div className="h-4 bg-slate-200 rounded w-2/3" />
+                                    <div className="h-3 bg-slate-100 rounded w-1/2" />
                                 </div>
-                                <div className="w-24 h-8 bg-slate-800/40 rounded-full" />
+                                <div className="w-24 h-8 bg-slate-100 rounded-full" />
                             </div>
                         ))}
                     </div>
                 ) : error ? (
                     <div className="text-center py-12">
-                        <p className="text-red-400 text-sm">{error}</p>
+                        <p className="text-red-500 text-sm">{error}</p>
                     </div>
                 ) : assignments.length === 0 ? (
                     <div className="text-center py-12">
@@ -137,35 +130,35 @@ export default function DashboardPage() {
                                 <Link
                                     key={assignment.id}
                                     href={`/dashboard/assignments/${assignment.id}`}
-                                    className="p-5 rounded-xl border border-slate-800/50 bg-slate-800/20 hover:bg-slate-800/40 transition-all duration-200 cursor-pointer group flex items-center justify-between"
+                                    className="p-5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-blue-200 transition-all duration-200 cursor-pointer group flex items-center justify-between"
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-3 mb-1">
-                                            <h3 className="font-medium text-white group-hover:text-blue-400 transition truncate">
+                                            <h3 className="font-medium text-slate-900 group-hover:text-blue-600 transition truncate">
                                                 {assignment.title}
                                             </h3>
-                                            <span className="text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded font-mono">
+                                            <span className="text-[10px] text-slate-500 bg-white border border-slate-100 px-2 py-0.5 rounded font-mono">
                                                 {assignment.course_path}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-slate-400 truncate">
+                                        <p className="text-sm text-slate-500 truncate">
                                             {assignment.description}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-4 ml-4 flex-shrink-0">
                                         <div className="text-right">
-                                            <p className="text-xs text-slate-500">Son tarih</p>
-                                            <p className="text-sm text-slate-300 font-medium">
+                                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Son tarih</p>
+                                            <p className="text-sm text-slate-700 font-medium">
                                                 {formatDate(assignment.due_date)}
                                             </p>
                                         </div>
                                         {daysLeft !== null && (
                                             <span
-                                                className={`px-3 py-1 rounded-full text-xs font-medium border ${isOverdue
-                                                        ? "bg-red-500/10 border-red-500/20 text-red-400"
+                                                className={`px-3 py-1 rounded-full text-xs font-semibold ${isOverdue
+                                                        ? "bg-red-50 text-red-600 border border-red-100"
                                                         : isUrgent
-                                                            ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
-                                                            : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                                            ? "bg-yellow-50 text-yellow-600 border border-yellow-100"
+                                                            : "bg-emerald-50 text-emerald-600 border border-emerald-100"
                                                     }`}
                                             >
                                                 {isOverdue

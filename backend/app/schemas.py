@@ -64,6 +64,8 @@ class SubmissionRequest(BaseModel):
     assignment_id: UUID
     code_text: str
     language: str = "python"
+    custom_lat: Optional[float] = None
+    custom_lng: Optional[float] = None
 
 
 class SubmissionResponse(BaseModel):

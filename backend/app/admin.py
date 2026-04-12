@@ -103,26 +103,26 @@ def flagged_by_location(
     return [FlaggedSubmissionResponse(**dict(r)) for r in rows]
 
 
-# ── TimescaleDB: Haftalık metrikler ──────────
+# ── TimescaleDB: Günlük metrikler ───────────
 
-@router.get("/metrics/weekly", response_model=list[WeeklyMetricResponse])
-def weekly_metrics(
+@router.get("/metrics/daily", response_model=list[WeeklyMetricResponse])
+def daily_metrics(
     payload: dict = Depends(_require_teacher_or_admin),
     db: Session = Depends(get_db),
 ):
     """
-    TimescaleDB time_bucket fonksiyonu ile haftalık ortalama skor
-    ve submission sayısını döndürür. Frontend Chart.js grafiği için.
+    TimescaleDB time_bucket fonksiyonu ile günlük ortalama skor
+    ve submission sayısını döndürür. Frontend Recharts grafiği için.
     """
     rows = db.execute(text("""
         SELECT
-            time_bucket('1 week', time) AS week,
+            time_bucket('1 day', time) AS week,
             AVG(score)::float           AS avg_score,
             COUNT(*)::int               AS submission_count
         FROM submission_metrics
+        WHERE time > NOW() - INTERVAL '30 days'
         GROUP BY week
-        ORDER BY week DESC
-        LIMIT 12
+        ORDER BY week ASC
     """)).mappings().all()
 
     return [WeeklyMetricResponse(**dict(r)) for r in rows]
@@ -202,7 +202,7 @@ def course_subtree(
     rows = db.execute(text("""
         SELECT id::text, label, path::text, description
         FROM course_tree
-        WHERE path <@ :cpath::ltree
+        WHERE path <@ CAST(:cpath AS ltree)
         ORDER BY path
     """), {"cpath": course_path}).mappings().all()
 

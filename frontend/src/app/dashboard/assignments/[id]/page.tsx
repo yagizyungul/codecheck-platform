@@ -38,6 +38,11 @@ export default function AssignmentDetailPage() {
     const [submitError, setSubmitError] = useState("");
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
+    // Mock Location States
+    const [isTestMode, setIsTestMode] = useState(false);
+    const [customLat, setCustomLat] = useState("");
+    const [customLng, setCustomLng] = useState("");
+
     useEffect(() => {
         fetchAssignment();
     }, [assignmentId]);
@@ -64,11 +69,18 @@ export default function AssignmentDetailPage() {
         setSubmitSuccess(null);
 
         try {
-            const res = await api.post("/submissions", {
+            const payload: any = {
                 assignment_id: assignmentId,
                 code_text: code,
                 language,
-            });
+            };
+
+            if (isTestMode && customLat && customLng) {
+                payload.custom_lat = parseFloat(customLat);
+                payload.custom_lng = parseFloat(customLng);
+            }
+
+            const res = await api.post("/submissions", payload);
             setSubmitSuccess(res.data.id);
             toast("Kodunuz başarıyla gönderildi! Sonuç sayfasına yönlendiriliyorsunuz...", "success");
             // 2 saniye sonra submission detay sayfasına yönlendir
@@ -248,10 +260,57 @@ export default function AssignmentDetailPage() {
                         </div>
                     )}
 
+                    {/* Test Modu (Manuel Konum Simülasyonu) */}
+                    <div className="mb-4 p-4 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                        <div className="flex items-center justify-between mb-3">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isTestMode}
+                                    onChange={(e) => setIsTestMode(e.target.checked)}
+                                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-blue-500 focus:ring-blue-500/50"
+                                />
+                                <span className="text-sm font-bold text-blue-400">Test Modu (Manuel Konum Simülasyonu)</span>
+                            </label>
+                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-500/50">Geliştirici Aracı</span>
+                        </div>
+
+                        {isTestMode && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Enlem (Latitude)</label>
+                                    <input
+                                        type="number"
+                                        step="0.0001"
+                                        value={customLat}
+                                        onChange={(e) => setCustomLat(e.target.value)}
+                                        placeholder="Örn: 39.9334 (Ankara)"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50"
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Boylam (Longitude)</label>
+                                    <input
+                                        type="number"
+                                        step="0.0001"
+                                        value={customLng}
+                                        onChange={(e) => setCustomLng(e.target.value)}
+                                        placeholder="Örn: 32.8597"
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500/50"
+                                    />
+                                </div>
+                                <p className="col-span-2 text-[10px] text-slate-500 italic">
+                                    * Bu koordinatlar PostGIS üzerinde konumsal analizleri test etmek için kullanılacaktır.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex items-center justify-between">
                         <p className="text-xs text-slate-500">
                             💡 Gönderdiğiniz kod AI tarafından analiz edilecek ve benzerlik kontrolünden geçirilecektir.
                         </p>
+
                         <button
                             onClick={handleSubmit}
                             disabled={submitting || !!submitSuccess || !code.trim()}

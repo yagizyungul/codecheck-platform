@@ -9,6 +9,7 @@ from typing import Optional
 _model = None
 
 
+
 def _get_model():
     """Lazy load – modeli ilk kullanımda yükler."""
     global _model
@@ -30,6 +31,10 @@ def embed_code(code: str) -> Optional[list[float]]:
         model = _get_model()
         embedding = model.encode(code, normalize_embeddings=True)
         return embedding.tolist()
+        
+        
+        
+        
     except Exception as e:
         print(f"❌ Embedding hatası: {e}")
         return None
